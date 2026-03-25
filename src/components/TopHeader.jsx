@@ -29,7 +29,9 @@ export default function TopHeader({ setSidebarOpen, userName = "Utilisateur", ha
         
         {/* Mobile Logo Visibility */}
         <div className="flex lg:hidden items-center gap-2">
-          <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain rounded-full border border-gray-200 shadow-sm" onError={(e) => e.target.style.display='none'} />
+          <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-200 shadow-sm bg-white dark:bg-gray-800 flex items-center justify-center">
+            <img src="/logo.png" alt="Logo" className="w-full h-full object-contain scale-[1.3] transform-gpu" onError={(e) => e.target.style.display='none'} />
+          </div>
           <span className="font-black text-gray-900 dark:text-white tracking-tighter leading-none text-xl">DIGI-GUINEE</span>
         </div>
 

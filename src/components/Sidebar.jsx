@@ -15,17 +15,17 @@ export default function Sidebar({ page, setPage }) {
   return (
     <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col hidden lg:flex sticky top-0 h-screen transition-colors duration-300">
       <div className="h-32 flex items-center px-6 border-b border-gray-200 dark:border-gray-800 gap-3 bg-gradient-to-r from-brand-50 to-transparent dark:from-brand-900/10">
-        <div className="w-20 h-20 relative flex-shrink-0">
+        <div className="w-20 h-20 relative flex-shrink-0 rounded-full overflow-hidden border-2 border-brand-200 shadow-lg bg-white dark:bg-gray-800 flex items-center justify-center">
           <img 
             src="/logo.png" 
             alt="Logo" 
-            className="w-full h-full object-contain rounded-full border-2 border-brand-200 shadow-lg"
+            className="w-full h-full object-contain scale-[1.3] transform-gpu"
             onError={(e) => {
               e.target.style.display = 'none';
               e.target.nextSibling.style.display = 'flex';
             }}
           />
-          <div className="hidden w-20 h-20 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 items-center justify-center text-white font-bold text-2xl shadow-glow">
+          <div className="hidden w-20 h-20 bg-gradient-to-br from-brand-400 to-brand-600 items-center justify-center text-white font-bold text-2xl shadow-glow">
             D
           </div>
         </div>

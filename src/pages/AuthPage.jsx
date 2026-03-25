@@ -36,7 +36,9 @@ export default function AuthPage({ onAuthSuccess }) {
 
         <div className="relative z-10">
           <div className="flex items-center gap-4 mb-6">
-            <img src="/logo.png" alt="Logo" className="w-24 h-24 object-contain rounded-full border-4 border-white/20 shadow-2xl" onError={(e) => e.target.style.display='none'} />
+            <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white/20 shadow-2xl bg-white flex items-center justify-center">
+               <img src="/logo.png" alt="Logo" className="w-full h-full object-contain scale-[1.3] transform-gpu" onError={(e) => e.target.style.display='none'} />
+            </div>
             <div>
               <h1 className="text-4xl font-black text-white tracking-tighter">DIGI-GUINEE</h1>
               <p className="text-accent-400 text-xs font-bold tracking-[0.2em] uppercase">Gère ton argent sans stress</p>
@@ -61,11 +63,13 @@ export default function AuthPage({ onAuthSuccess }) {
         <div className="w-full max-w-md">
           
           <div className="lg:hidden text-center mb-10">
-            <img src="/logo.png" alt="Logo" className="w-28 h-28 object-contain mx-auto rounded-full border-2 border-brand-100 shadow-lg" onError={(e) => {
-              e.target.style.display = 'none';
-              e.target.nextSibling.style.display = 'flex';
-            }} />
-            <div className="hidden w-24 h-24 bg-brand-600 rounded-full mx-auto items-center justify-center text-white font-black text-2xl shadow-glow">D</div>
+            <div className="w-28 h-28 mx-auto rounded-full overflow-hidden border-2 border-brand-100 shadow-lg bg-white flex items-center justify-center">
+              <img src="/logo.png" alt="Logo" className="w-full h-full object-contain scale-[1.3] transform-gpu" onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }} />
+              <div className="hidden w-full h-full bg-brand-600 items-center justify-center text-white font-black text-2xl shadow-glow">D</div>
+            </div>
             <h1 className="text-3xl font-black text-gray-900 dark:text-white mt-4 tracking-tighter">DIGI-GUINEE</h1>
           </div>
 
