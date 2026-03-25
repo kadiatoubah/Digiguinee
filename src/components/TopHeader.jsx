@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Bell, Menu, Moon, Sun, Monitor, CheckCircle } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 
-export default function TopHeader({ setSidebarOpen, userName = "Utilisateur", hasNotifications = true }) {
+export default function TopHeader({ setSidebarOpen, userName = "Utilisateur", hasNotifications = true, setPage }) {
   const { theme, setTheme } = useTheme();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   const cycleTheme = () => {
     if (theme === 'light') setTheme('dark');
@@ -20,6 +26,13 @@ export default function TopHeader({ setSidebarOpen, userName = "Utilisateur", ha
         <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
           <Menu className="w-5 h-5" />
         </button>
+        
+        {/* Mobile Logo Visibility */}
+        <div className="flex lg:hidden items-center gap-2">
+          <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain rounded-full border border-gray-200 shadow-sm" onError={(e) => e.target.style.display='none'} />
+          <span className="font-black text-gray-900 dark:text-white tracking-tighter leading-none text-xl">DIGI-GUINEE</span>
+        </div>
+
         <div className="hidden sm:flex items-center gap-2 bg-gray-50 dark:bg-gray-900 px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 transition-colors w-64 focus-within:ring-2 focus-within:ring-brand-500/50">
           <Search className="w-4 h-4 text-gray-400" />
           <input type="text" placeholder="Rechercher..." className="bg-transparent border-none outline-none text-sm w-full dark:text-white" />
@@ -53,7 +66,9 @@ export default function TopHeader({ setSidebarOpen, userName = "Utilisateur", ha
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">Votre objectif a été atteint ! 🎉</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Il y a quelques instants</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Arrivée à {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
                   </div>
                 </div>
                 <div className="p-4 text-center">
@@ -64,15 +79,18 @@ export default function TopHeader({ setSidebarOpen, userName = "Utilisateur", ha
           )}
         </div>
 
-        <div className="flex items-center gap-2 pl-2 border-l border-gray-200 dark:border-gray-700">
+        <button 
+          onClick={() => setPage('settings')}
+          className="flex items-center gap-2 pl-2 border-l border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 p-1 rounded-xl transition-colors"
+        >
            <div className="hidden sm:block text-right">
              <div className="text-sm font-bold text-gray-900 dark:text-white leading-tight">{userName}</div>
              <div className="text-xs text-brand-500 font-medium leading-tight">Marchande</div>
            </div>
-           <div className="w-9 h-9 rounded-full bg-brand-100 dark:bg-brand-900/50 border-2 border-brand-200 dark:border-brand-800 flex items-center justify-center text-brand-700 dark:text-brand-400 font-black text-sm">
+           <div className="w-10 h-10 rounded-full bg-brand-100 dark:bg-brand-900/50 border-2 border-brand-200 dark:border-brand-800 flex items-center justify-center text-brand-700 dark:text-brand-400 font-black text-sm">
              {userName ? userName.charAt(0).toUpperCase() : 'M'}
            </div>
-        </div>
+        </button>
       </div>
     </header>
   );

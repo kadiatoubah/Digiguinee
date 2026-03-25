@@ -8,7 +8,9 @@ import BottomNav from './components/BottomNav'
 import TopHeader from './components/TopHeader'
 import Toast from './components/Toast'
 import LockScreen from './components/LockScreen'
+import Onboarding from './components/Onboarding'
 
+import AuthPage from './pages/AuthPage'
 import HomePage from './pages/HomePage'
 import VentePage from './pages/VentePage'
 import TontinePage from './pages/TontinePage'
@@ -31,6 +33,9 @@ export default function App() {
     lockEnabled: false,
     pinCode: '0000'
   })
+
+  const [onboardingCompleted, setOnboardingCompleted] = useLocalStorage('tk_onboarding_completed', false)
+  const [currentUser, setCurrentUser] = useLocalStorage('tk_user', null)
 
   // Shared states across pages
   const [ventes, setVentes] = useLocalStorage('tk_ventes', [])
@@ -56,10 +61,21 @@ export default function App() {
       case 'help':
         return <HelpPage showToast={showToast} />
       case 'settings':
-        return <SettingsPage settings={settings} setSettings={setSettings} showToast={showToast} />
+        return <SettingsPage settings={settings} setSettings={setSettings} setCurrentUser={setCurrentUser} showToast={showToast} />
       default:
         return <HomePage ventes={ventes} tontines={tontines} settings={settings} setPage={setPage} showToast={showToast} />
     }
+  }
+
+  if (!onboardingCompleted) {
+    return <Onboarding onComplete={() => setOnboardingCompleted(true)} />
+  }
+
+  if (!currentUser) {
+    return <AuthPage onAuthSuccess={(user) => {
+      setCurrentUser(user);
+      setSettings({...settings, userName: user.name});
+    }} />
   }
 
   if (settings.lockEnabled && !isUnlocked) {
@@ -72,7 +88,7 @@ export default function App() {
       <Toast toasts={toasts} />
       
       <main className="flex-1 flex flex-col min-h-screen min-w-0 pb-16 lg:pb-0 relative">
-        <TopHeader userName={settings.userName} />
+        <TopHeader userName={settings.userName} setPage={setPage} />
         <div className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 overflow-x-hidden">
           {renderPage()}
         </div>

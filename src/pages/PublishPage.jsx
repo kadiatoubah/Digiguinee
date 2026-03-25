@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Share2, Image as ImageIcon, Send } from 'lucide-react';
+import { Share2, Image as ImageIcon, Send, X, Plus, Trash2 } from 'lucide-react';
 import { fmt } from '../utils';
 
 export default function PublishPage({ settings, showToast }) {
@@ -7,27 +7,60 @@ export default function PublishPage({ settings, showToast }) {
   const [productName, setProductName] = useState('');
   const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
+  const [images, setImages] = useState([]);
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    const newImages = files.map(file => ({
+      file,
+      preview: URL.createObjectURL(file)
+    }));
+    setImages(prev => [...prev, ...newImages].slice(0, 5)); // Limit to 5
+  };
+
+  const removeImage = (index) => {
+    setImages(prev => {
+      const updated = [...prev];
+      URL.revokeObjectURL(updated[index].preview);
+      updated.splice(index, 1);
+      return updated;
+    });
+  };
 
   const handleShare = async () => {
     if (!productName.trim()) return showToast('Veuillez entrer un nom de produit.', 'error');
 
     const textPayload = `🌟 *Nouveau Produit Disponible !* 🌟\n\n🛍️ *${productName}*\n💰 Prix : *${fmt(price, currency)}*\n\n📝 Détails : ${description}\n\nContactez-moi vite pour commander ! 📱`;
+    const filesToShare = images.map(img => img.file);
 
     if (navigator.share) {
       try {
-        await navigator.share({
+        const shareData = {
           title: `Produit: ${productName}`,
           text: textPayload,
-        });
+        };
+
+        // Attempt to share files if supported
+        if (filesToShare.length > 0 && navigator.canShare && navigator.canShare({ files: filesToShare })) {
+          shareData.files = filesToShare;
+        }
+
+        await navigator.share(shareData);
         showToast('Partage réussi !');
       } catch (err) {
-        console.error('Erreur de partage:', err);
+        if (err.name !== 'AbortError') {
+          console.error('Erreur de partage:', err);
+          showToast('Erreur lors du partage.', 'error');
+        }
       }
     } else {
       // Fallback to WhatsApp wa.me link
       const encodedText = encodeURIComponent(textPayload);
       window.open(`https://wa.me/?text=${encodedText}`, '_blank');
       showToast('Redirection vers WhatsApp...', 'info');
+      if (images.length > 0) {
+        showToast('Info: WhatsApp Web ne supporte pas l\'envoi direct d\'images via lien.', 'warning');
+      }
     }
   };
 
@@ -59,15 +92,38 @@ export default function PublishPage({ settings, showToast }) {
                   value={price} onChange={e => setPrice(e.target.value)}
                 />
              </div>
-             <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Message d'accroche</label>
-                <textarea 
-                  rows="4"
-                  className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-500/50 dark:text-white resize-none"
-                  placeholder="Détails du produit, couleurs disponibles, tailles..."
-                  value={description} onChange={e => setDescription(e.target.value)}
-                />
-             </div>
+              <div>
+                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Photos du produit (Max 5)</label>
+                 <div className="grid grid-cols-4 gap-2 mb-2">
+                   {images.map((img, idx) => (
+                     <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                       <img src={img.preview} alt="Preview" className="w-full h-full object-cover" />
+                       <button 
+                         onClick={() => removeImage(idx)}
+                         className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                       >
+                         <X className="w-3 h-3" />
+                       </button>
+                     </div>
+                   ))}
+                   {images.length < 5 && (
+                     <label className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg flex flex-col items-center justify-center aspect-square cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                       <Plus className="w-5 h-5 text-gray-400" />
+                       <span className="text-[10px] text-gray-400 mt-1 uppercase font-bold">Ajouter</span>
+                       <input type="file" className="hidden" multiple accept="image/*" onChange={handleFileChange} />
+                     </label>
+                   )}
+                 </div>
+              </div>
+              <div>
+                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Message d'accroche</label>
+                 <textarea 
+                   rows="3"
+                   className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-500/50 dark:text-white resize-none"
+                   placeholder="Détails du produit, couleurs disponibles..."
+                   value={description} onChange={e => setDescription(e.target.value)}
+                 />
+              </div>
            </div>
            
            <button 
@@ -80,15 +136,24 @@ export default function PublishPage({ settings, showToast }) {
 
         <div className="glass-card p-6 border-l-4 border-l-brand-500 flex flex-col bg-brand-50/50 dark:bg-brand-900/10">
            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Aperçu du message</h3>
-           <div className="flex-1 bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-700/50 font-sans text-sm whitespace-pre-wrap text-gray-800 dark:text-gray-200">
-             {productName ? (
-               `🌟 *Nouveau Produit Disponible !* 🌟\n\n🛍️ *${productName}*\n💰 Prix : *${fmt(price, currency)}*\n\n📝 Détails : ${description}\n\nContactez-moi vite pour commander ! 📱`
-             ) : (
-               <div className="text-gray-400 dark:text-gray-500 italic flex items-center justify-center h-full text-center">
-                 Remplissez le formulaire pour voir un aperçu de votre publication WhatsApp ici.
-               </div>
-             )}
-           </div>
+            <div className="flex-1 bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-700/50 font-sans text-sm overflow-y-auto">
+              {images.length > 0 && (
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  {images.map((img, idx) => (
+                    <img key={idx} src={img.preview} alt="Preview" className="w-full aspect-[4/3] object-cover rounded-lg" />
+                  ))}
+                </div>
+              )}
+              <div className="whitespace-pre-wrap text-gray-800 dark:text-gray-200">
+                {productName ? (
+                  `🌟 *Nouveau Produit Disponible !* 🌟\n\n🛍️ *${productName}*\n💰 Prix : *${fmt(price, currency)}*\n\n📝 Détails : ${description}\n\nContactez-moi vite pour commander ! 📱`
+                ) : (
+                  <div className="text-gray-400 dark:text-gray-500 italic flex items-center justify-center h-full text-center py-10">
+                    Remplissez le formulaire pour voir un aperçu de votre publication WhatsApp ici.
+                  </div>
+                )}
+              </div>
+            </div>
         </div>
       </div>
     </div>

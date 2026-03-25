@@ -9,11 +9,23 @@ function VenteModal({ onClose, onSave, initialData }) {
     initialData || { 
       clientName: '', 
       amount: '', 
+      paidAmount: '', // New field
       isPaid: false, 
       date: new Date().toISOString().slice(0, 10), 
       notes: '' 
     }
   );
+
+  const setPaymentMode = (mode) => {
+    const total = Number(formData.amount) || 0;
+    if (mode === 'full') {
+      setFormData({ ...formData, isPaid: true, paidAmount: total });
+    } else if (mode === 'half') {
+      setFormData({ ...formData, isPaid: false, paidAmount: Math.floor(total / 2) });
+    } else if (mode === 'none') {
+      setFormData({ ...formData, isPaid: false, paidAmount: 0 });
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -22,6 +34,8 @@ function VenteModal({ onClose, onSave, initialData }) {
     onSave({
       ...formData,
       amount: Number(formData.amount),
+      paidAmount: Number(formData.paidAmount) || 0,
+      isPaid: Number(formData.paidAmount) >= Number(formData.amount) && Number(formData.amount) > 0,
       date: new Date(formData.date).getTime()
     });
     onClose();
@@ -76,23 +90,45 @@ function VenteModal({ onClose, onSave, initialData }) {
           </div>
           
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Statut du paiement</label>
-            <div className="flex bg-gray-100 dark:bg-gray-900 p-1.5 rounded-xl border border-gray-200 dark:border-gray-700">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Options de paiement rapide</label>
+            <div className="grid grid-cols-3 gap-2 bg-gray-100 dark:bg-gray-900 p-1.5 rounded-xl border border-gray-200 dark:border-gray-700">
               <button 
                 type="button"
-                onClick={() => setFormData({...formData, isPaid: true})}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-colors ${formData.isPaid ? 'bg-white dark:bg-gray-800 text-green-600 dark:text-green-400 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                onClick={() => setPaymentMode('full')}
+                className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-colors ${formData.paidAmount === Number(formData.amount) && Number(formData.amount) > 0 ? 'bg-white dark:bg-gray-800 text-green-600 dark:text-green-400 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
               >
-                <CheckCircle className="w-4 h-4" /> Payé
+                Tout payé
               </button>
               <button 
                 type="button"
-                onClick={() => setFormData({...formData, isPaid: false})}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-colors ${!formData.isPaid ? 'bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                onClick={() => setPaymentMode('half')}
+                className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-colors ${formData.paidAmount > 0 && formData.paidAmount < Number(formData.amount) ? 'bg-white dark:bg-gray-800 text-brand-600 dark:text-brand-400 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
               >
-                <Clock className="w-4 h-4" /> À Crédit
+                À moitié
+              </button>
+              <button 
+                type="button"
+                onClick={() => setPaymentMode('none')}
+                className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-colors ${Number(formData.paidAmount) === 0 ? 'bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Impayé
               </button>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Montant réellement payé *</label>
+            <input 
+              type="number" 
+              className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-500/50 transition-all text-sm font-bold text-brand-600 dark:text-brand-400"
+              placeholder="Montant versé aujourd'hui"
+              value={formData.paidAmount}
+              onChange={e => setFormData({...formData, paidAmount: e.target.value})}
+              min="0"
+              max={formData.amount}
+              required 
+            />
+            <p className="text-[10px] text-gray-400 mt-1 uppercase font-bold px-1">Le reste sera considéré comme une dette</p>
           </div>
 
           <div>
@@ -134,10 +170,12 @@ export default function VentePage({ ventes, setVentes, settings, showToast }) {
 
   // Stats
   const stats = useMemo(() => {
+    const totalVentes = ventes.reduce((s, v) => s + v.amount, 0);
+    const totalEncaisse = ventes.reduce((s, v) => s + (v.paidAmount || (v.isPaid ? v.amount : 0)), 0);
     return {
-      total: ventes.reduce((s, v) => s + v.amount, 0),
-      paid: ventes.filter(v => v.isPaid).reduce((s, v) => s + v.amount, 0),
-      debt: ventes.filter(v => !v.isPaid).reduce((s, v) => s + v.amount, 0),
+      total: totalVentes,
+      paid: totalEncaisse,
+      debt: totalVentes - totalEncaisse,
       count: ventes.length
     }
   }, [ventes]);
@@ -331,13 +369,15 @@ export default function VentePage({ ventes, setVentes, settings, showToast }) {
                       <button 
                         onClick={() => handleTogglePaid(v.id)}
                         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wide hover:opacity-80 transition-opacity ${
-                          v.isPaid 
+                          v.paidAmount >= v.amount 
                           ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400'
+                          : v.paidAmount > 0 
+                          ? 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-400'
                           : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
                         }`}
                       >
-                        {v.isPaid ? <CheckCircle className="w-3.5 h-3.5"/> : <Clock className="w-3.5 h-3.5"/>}
-                        {v.isPaid ? 'Payé' : 'Crédit'}
+                        {v.paidAmount >= v.amount ? <CheckCircle className="w-3.5 h-3.5"/> : <Clock className="w-3.5 h-3.5"/>}
+                        {v.paidAmount >= v.amount ? 'Payé' : v.paidAmount > 0 ? 'Partiel' : 'Crédit'}
                       </button>
                     </td>
                     <td className="p-4 text-gray-500 dark:text-gray-400">

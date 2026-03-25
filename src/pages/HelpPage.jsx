@@ -4,6 +4,14 @@ import { BookOpen, Mic, Play, Pause, Square, MessageCircle, ShieldQuestion } fro
 export default function HelpPage({ showToast }) {
   const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [lang, setLang] = useState('fr');
+
+  const languages = [
+    { id: 'fr', label: 'Français' },
+    { id: 'sus', label: 'Soussou' },
+    { id: 'pou', label: 'Poular' },
+    { id: 'mal', label: 'Malinké' },
+  ];
   
   const handleRecord = () => {
     if (isRecording) {
@@ -22,8 +30,14 @@ export default function HelpPage({ showToast }) {
       setIsPlaying(false);
     } else {
       setIsPlaying(true);
-      const msg = new SpeechSynthesisUtterance("Bienvenue sur Tontine App. Utilisez le bouton Vente pour enregistrer vos dettes. Utilisez Tontines pour gérer vos groupes d'épargne.");
-      msg.lang = 'fr-FR';
+      const texts = {
+        fr: "Bienvenue sur Digi Guinée. Gérez vos ventes et vos tontines sans stress.",
+        sus: "I ni saama Digi Guinée. I xa tontine nun i xa xunsee malanyi kanyi.",
+        pou: "Bismillah Digi Guinée. Joggu kaaliss ma e tontine ma kadi.",
+        mal: "I ni bara Digi Guinée. I la tontine ni i la feere taga gbelen."
+      };
+      const msg = new SpeechSynthesisUtterance(texts[lang] || texts.fr);
+      msg.lang = lang === 'fr' ? 'fr-FR' : 'fr-FR'; // Fallback to fr-FR voice for simulation
       msg.onend = () => setIsPlaying(false);
       window.speechSynthesis.speak(msg);
     }
@@ -43,7 +57,19 @@ export default function HelpPage({ showToast }) {
             <MessageCircle className="w-8 h-8 text-blue-500" />
           </div>
           <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Écouter le guide vocal</h3>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">Si vous préférez écouter les explications d'utilisation au lieu de les lire, appuyez ici.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">Choisissez votre langue et écoutez comment utiliser l'application.</p>
+          
+          <div className="flex gap-2 mb-6 flex-wrap justify-center">
+            {languages.map(l => (
+              <button 
+                key={l.id}
+                onClick={() => setLang(l.id)}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${lang === l.id ? 'bg-blue-500 text-white shadow-md scale-105' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'}`}
+              >
+                {l.label}
+              </button>
+            ))}
+          </div>
           
           <button 
             onClick={handlePlay}

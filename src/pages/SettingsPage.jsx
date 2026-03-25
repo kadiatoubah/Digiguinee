@@ -1,8 +1,8 @@
 import React from 'react';
 import { useTheme } from '../hooks/useTheme';
-import { Moon, Sun, Monitor, Save } from 'lucide-react';
+import { Moon, Sun, Monitor, Save, LogOut } from 'lucide-react';
 
-export default function SettingsPage({ settings, setSettings, showToast }) {
+export default function SettingsPage({ settings, setSettings, setCurrentUser, showToast }) {
   const { theme, setTheme } = useTheme();
 
   const handleSave = (e) => {
@@ -144,7 +144,23 @@ export default function SettingsPage({ settings, setSettings, showToast }) {
            </div>
         </div>
 
-        <div className="pt-4 flex justify-end">
+        <div className="pt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+          {setCurrentUser && (
+            <button 
+              type="button" 
+              onClick={() => {
+                if (window.confirm("Êtes-vous sûr de vouloir vous déconnecter ?")) {
+                  setCurrentUser(null);
+                  showToast("Vous avez été déconnecté.", "success");
+                }
+              }}
+              className="w-full sm:w-auto bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-500/10 dark:hover:bg-red-500/20 px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-transform active:scale-95"
+            >
+              <LogOut className="w-5 h-5" />
+              Déconnexion
+            </button>
+          )}
+
           <button type="submit" className="w-full sm:w-auto bg-brand-500 hover:bg-brand-600 text-white px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-soft transition-transform active:scale-95">
             <Save className="w-5 h-5" />
             Enregistrer les modifications

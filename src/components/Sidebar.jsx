@@ -14,11 +14,25 @@ export default function Sidebar({ page, setPage }) {
 
   return (
     <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col hidden lg:flex sticky top-0 h-screen transition-colors duration-300">
-      <div className="h-20 flex items-center px-6 border-b border-gray-200 dark:border-gray-800 gap-3">
-        <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold text-xl shadow-glow">
-          D
+      <div className="h-32 flex items-center px-6 border-b border-gray-200 dark:border-gray-800 gap-3 bg-gradient-to-r from-brand-50 to-transparent dark:from-brand-900/10">
+        <div className="w-20 h-20 relative flex-shrink-0">
+          <img 
+            src="/logo.png" 
+            alt="Logo" 
+            className="w-full h-full object-contain rounded-full border-2 border-brand-200 shadow-lg"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+          <div className="hidden w-20 h-20 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 items-center justify-center text-white font-bold text-2xl shadow-glow">
+            D
+          </div>
         </div>
-        <span className="font-extrabold text-xl text-gray-900 dark:text-white tracking-tight">DIGI GUINEE</span>
+        <div>
+          <span className="block font-black text-xl text-gray-900 dark:text-white tracking-tighter leading-none">DIGI-GUINEE</span>
+          <span className="block text-xs font-bold text-accent-600 dark:text-accent-400 uppercase tracking-widest mt-1.5">SANS STRESS</span>
+        </div>
       </div>
 
       <nav className="flex-1 px-4 py-8 flex flex-col gap-2 overflow-y-auto">

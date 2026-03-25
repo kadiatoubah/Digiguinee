@@ -185,7 +185,7 @@ function TontineDetail({ tontine, onBack, onUpdate, showToast, onDeleteTontine, 
   const pct = totalCount > 0 ? (paidCount / totalCount) * 100 : 0;
   
   const handleAddMember = (data) => {
-    const newMember = { id: generateId(), ...data, paid: false, order: totalCount };
+    const newMember = { id: generateId(), ...data, paidAmount: 0, paid: false, order: totalCount };
     onUpdate({ ...tontine, members: [...tontine.members, newMember] });
     showToast(`${data.memberName} a rejoint le groupe !`);
   };
@@ -198,12 +198,36 @@ function TontineDetail({ tontine, onBack, onUpdate, showToast, onDeleteTontine, 
     showToast('Profil membre mis à jour !');
   };
 
-  const handleTogglePaid = (id) => {
+  const handleTogglePaid = (member) => {
     if(!isAdmin) return showToast("🔒 Seul l'administrateur peut valider un paiement.", "error");
-    onUpdate({
-      ...tontine,
-      members: tontine.members.map(m => m.id === id ? { ...m, paid: !m.paid } : m)
-    });
+    
+    // Toggle logic: If zero, set to full. If partial/full, set to zero.
+    // Or ask for amount if they click the status pill specifically.
+    const currentPaid = member.paidAmount || 0;
+    const fullAmount = tontine.amount;
+
+    if (currentPaid < fullAmount) {
+      const val = window.prompt(`Montant payé par ${member.memberName} (Max: ${fullAmount})`, fullAmount);
+      if (val === null) return;
+      const numVal = Number(val);
+      onUpdate({
+        ...tontine,
+        members: tontine.members.map(m => m.id === member.id ? { 
+          ...m, 
+          paidAmount: numVal, 
+          paid: numVal >= fullAmount 
+        } : m)
+      });
+    } else {
+      onUpdate({
+        ...tontine,
+        members: tontine.members.map(m => m.id === member.id ? { 
+          ...m, 
+          paidAmount: 0, 
+          paid: false 
+        } : m)
+      });
+    }
   };
 
   const handleAdminToggle = () => {
@@ -233,11 +257,11 @@ function TontineDetail({ tontine, onBack, onUpdate, showToast, onDeleteTontine, 
         id: generateId(),
         ts: Date.now(),
         recipient: tontine.members[currentIdx]?.memberName || 'Inconnu',
-        amountCollected: paidCount * tontine.amount
+        amountCollected: tontine.members.reduce((sum, m) => sum + (m.paidAmount || 0), 0)
       };
       onUpdate({
         ...tontine,
-        members: tontine.members.map(m => ({ ...m, paid: false })),
+        members: tontine.members.map(m => ({ ...m, paid: false, paidAmount: 0 })),
         currentRecipient: (currentIdx + 1) % totalCount,
         history: [histEntry, ...(tontine.history || [])]
       });
@@ -287,7 +311,7 @@ function TontineDetail({ tontine, onBack, onUpdate, showToast, onDeleteTontine, 
           <div>
             <div className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Récolte en cours</div>
             <div className="text-4xl sm:text-5xl font-black text-gray-900 dark:text-white tracking-tight mb-2">
-              {isAdmin ? fmt(paidCount * tontine.amount, currency) : '***'}
+              {isAdmin ? fmt(tontine.members.reduce((sum, m) => sum + (m.paidAmount || 0), 0), currency) : '***'}
             </div>
             <div className="text-gray-500 dark:text-gray-400 font-medium">
               Sur un objectif de <span className="text-gray-900 dark:text-white font-bold">{isAdmin ? fmt(potTotal, currency) : '***'}</span> total
@@ -358,15 +382,17 @@ function TontineDetail({ tontine, onBack, onUpdate, showToast, onDeleteTontine, 
                       </td>
                       <td className="p-4">
                          <button 
-                           onClick={() => handleTogglePaid(m.id)}
+                           onClick={() => handleTogglePaid(m)}
                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wide hover:opacity-80 transition-opacity ${
-                             m.paid 
+                             (m.paidAmount || 0) >= tontine.amount 
                              ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400'
+                             : (m.paidAmount || 0) > 0
+                             ? 'bg-brand-100 text-brand-700 dark:bg-brand-500/20 dark:text-brand-400'
                              : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
                            }`}
                          >
-                           {m.paid ? <CheckCircle2 className="w-3.5 h-3.5"/> : <Clock className="w-3.5 h-3.5"/>}
-                           {m.paid ? 'A Payé' : 'Impayé'}
+                           {(m.paidAmount || 0) >= tontine.amount ? <CheckCircle2 className="w-3.5 h-3.5"/> : <Clock className="w-3.5 h-3.5"/>}
+                           {(m.paidAmount || 0) >= tontine.amount ? 'Complet' : (m.paidAmount || 0) > 0 ? `${fmt(m.paidAmount, currency)}` : 'Impayé'}
                          </button>
                       </td>
                       <td className="p-4 pr-6 text-right whitespace-nowrap">
